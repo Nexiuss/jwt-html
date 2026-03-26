@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT 在线加密解密工具 - 免费的 JSON Web Token 编码解码器</title>
+    <meta name="description"
+        content="专业的 JWT 在线加密解密工具，支持 HS256、HS384、HS512、RS256、RS384、RS512 算法。安全便捷的 JSON Web Token 生成、解析和验证工具，无需注册即可使用。">
+    <meta name="keywords" content="JWT,JSON Web Token,JWT解密,JWT加密,JWT验证,JWT工具,在线JWT,JWT编码,JWT解码,HS256,RS256,令牌解析">
+    <meta name="author" content="JWT Tools">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="JWT 在线加密解密工具 - 免费的 JSON Web Token 编码解码器">
+    <meta property="og:description" content="专业的 JWT 在线加密解密工具，支持多种算法，安全便捷的 JSON Web Token 处理工具">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="JWT 在线加密解密工具">
+    <meta name="twitter:description" content="专业的 JWT 在线加密解密工具，支持多种算法">
+    <script src="./js/tailwindcss-3.4.16.js"></script>
+    <link rel="stylesheet" href="./fonts/remixicon.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#6366f1'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before {
+            content: "\f3c2";
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">JWT 加密解密工具</h1>
+            <p class="text-lg text-gray-600">安全便捷的 JSON Web Token 处理工具，支持 JWT 的生成与解析</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">JWT Token</label>
+                        <textarea id="jwtInput"
+                            class="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-mono"
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">密钥</label>
+                        <input type="text" id="secretKey"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                            placeholder="your-256-bit-secret">
+                        <div id="keyStatus" class="mt-2 text-sm hidden">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                                    <i id="keyStatusIcon" class="ri-check-line"></i>
+                                </div>
+                                <span id="keyStatusText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Header</label>
+                        <textarea id="headerEditor"
+                            class="w-full h-24 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-mono bg-gray-50"
+                            readonly></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payload</label>
+                        <textarea id="payloadEditor"
+                            class="w-full h-48 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm font-mono"
+                            placeholder="请输入 JWT Token 进行解析"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">签名验证</label>
+                        <div id="signatureStatus" class="p-3 bg-gray-50 rounded-lg border text-sm">
+                            <div class="flex items-center text-gray-500">
+                                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                                    <i class="ri-information-line"></i>
+                                </div>
+                                <span>请输入 JWT Token 和密钥</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="errorMessage" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-5 h-5 flex items-center justify-center mr-2">
+                        <i class="ri-error-warning-line text-red-500"></i>
+                    </div>
+                    <span class="text-red-700" id="errorText"></span>
+                </div>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p class="mb-2">
+            <div class="w-4 h-4 flex items-center justify-center inline-block mr-1">
+                <i class="ri-information-line"></i>
+            </div>
+            使用说明：此工具仅在浏览器本地运行，不会上传任何数据到服务器
+            </p>
+            <p>支持 HS256、HS384、HS512、RS256、RS384、RS512 算法，请妥善保管您的密钥信息</p>
+        </div>
+    </div>
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="container mx-auto px-4 py-12 max-w-4xl">
+            <div class="text-center">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-3">JWT 工具集</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">专业的 JSON Web Token 处理工具，为开发者提供安全、便捷的 JWT 加密解密服务</p>
+                </div>
+                <div class="flex justify-center items-center space-x-6 mb-6">
+                    <a href="https://xaitx.com" target="_blank"
+                        class="text-primary hover:text-secondary transition-colors font-medium flex items-center">
+                        <div class="w-4 h-4 flex items-center justify-center mr-2">
+                            <i class="ri-external-link-line"></i>
+                        </div>
+                        XAITX 博客
+                    </a>
+                </div>
+                <div class="border-t border-gray-200 pt-6">
+                    <div
+                        class="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500">
+                        <div>© 2024 JWT Tools. All rights reserved.</div>
+                        <div class="flex items-center">
+                            Made with
+                            <div class="w-4 h-4 flex items-center justify-center mx-1">
+                                <i class="ri-heart-fill text-red-400"></i>
+                            </div>
+                            for developers
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script id="jwt-functionality">
+        document.addEventListener('DOMContentLoaded', function () {
+            let isUpdating = false;
+            let currentHeader = null;
+            let currentPayload = null;
+            function base64UrlEncode(str) {
+                return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            }
+            function base64UrlDecode(str) {
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (str.length % 4) {
+                    str += '=';
+                }
+                return atob(str);
+            }
+            function showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                errorText.textContent = message;
+                errorDiv.classList.remove('hidden');
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 3000);
+            }
+            function hideError() {
+                document.getElementById('errorMessage').classList.add('hidden');
+            }
+            async function hmacSign(key, data, algorithm) {
+                const encoder = new TextEncoder();
+                const keyData = encoder.encode(key);
+                const messageData = encoder.encode(data);
+                let hashAlgorithm;
+                switch (algorithm) {
+                    case 'HS256':
+                        hashAlgorithm = 'SHA-256';
+                        break;
+                    case 'HS384':
+                        hashAlgorithm = 'SHA-384';
+                        break;
+                    case 'HS512':
+                        hashAlgorithm = 'SHA-512';
+                        break;
+                    default:
+                        throw new Error(`不支持的算法: ${algorithm}`);
+                }
+                const cryptoKey = await crypto.subtle.importKey(
+                    'raw',
+                    keyData,
+                    { name: 'HMAC', hash: hashAlgorithm },
+                    false,
+                    ['sign']
+                );
+                const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+                return new Uint8Array(signature);
+            }
+            async function rsaSign(privateKey, data, algorithm) {
+                const encoder = new TextEncoder();
+                const messageData = encoder.encode(data);
+                let hashAlgorithm;
+                switch (algorithm) {
+                    case 'RS256':
+                        hashAlgorithm = 'SHA-256';
+                        break;
+                    case 'RS384':
+                        hashAlgorithm = 'SHA-384';
+                        break;
+                    case 'RS512':
+                        hashAlgorithm = 'SHA-512';
+                        break;
+                    default:
+                        throw new Error(`不支持的算法: ${algorithm}`);
+                }
+                try {
+                    const cryptoKey = await crypto.subtle.importKey(
+                        'pkcs8',
+                        pemToArrayBuffer(privateKey),
+                        {
+                            name: 'RSASSA-PKCS1-v1_5',
+                            hash: hashAlgorithm
+                        },
+                        false,
+                        ['sign']
+                    );
+                    const signature = await crypto.subtle.sign(
+                        'RSASSA-PKCS1-v1_5',
+                        cryptoKey,
+                        messageData
+                    );
+                    return new Uint8Array(signature);
+                } catch (error) {
+                    throw new Error('RSA 私钥格式错误或算法不支持');
+                }
+            }
+            function pemToArrayBuffer(pem) {
+                const pemHeader = '-----BEGIN PRIVATE KEY-----';
+                const pemFooter = '-----END PRIVATE KEY-----';
+                const pemContents = pem.replace(pemHeader, '').replace(pemFooter, '').replace(/\s/g, '');
+                const binaryString = atob(pemContents);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+            function arrayBufferToBase64Url(buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return base64UrlEncode(binary);
+            }
+            function updateKeyStatus(isValid, message) {
+                const keyStatus = document.getElementById('keyStatus');
+                const keyStatusIcon = document.getElementById('keyStatusIcon');
+                const keyStatusText = document.getElementById('keyStatusText');
+                keyStatus.classList.remove('hidden');
+                keyStatusText.textContent = message;
+                if (isValid) {
+                    keyStatusIcon.className = 'ri-check-line text-green-500';
+                    keyStatusText.className = 'text-green-600';
+                } else {
+                    keyStatusIcon.className = 'ri-close-line text-red-500';
+                    keyStatusText.className = 'text-red-600';
+                }
+            }
+            function updateSignatureStatus(isValid, message) {
+                const signatureStatus = document.getElementById('signatureStatus');
+                const statusClass = isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+                const iconClass = isValid ? 'ri-shield-check-line text-green-500' : 'ri-shield-cross-line text-red-500';
+                const textClass = isValid ? 'text-green-700' : 'text-red-700';
+                signatureStatus.className = `p-3 rounded-lg border text-sm ${statusClass}`;
+                signatureStatus.innerHTML = `
+<div class="flex items-center ${textClass}">
+<div class="w-4 h-4 flex items-center justify-center mr-2">
+<i class="${iconClass}"></i>
+</div>
+<span>${message}</span>
+</div>
+`;
+            }
+            async function generateJWT(header, payload, secretKey) {
+                try {
+                    const encodedHeader = base64UrlEncode(JSON.stringify(header));
+                    const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+                    const signingInput = encodedHeader + '.' + encodedPayload;
+                    const algorithm = header.alg;
+                    let signature;
+                    if (['HS256', 'HS384', 'HS512'].includes(algorithm)) {
+                        signature = await hmacSign(secretKey, signingInput, algorithm);
+                    } else if (['RS256', 'RS384', 'RS512'].includes(algorithm)) {
+                        signature = await rsaSign(secretKey, signingInput, algorithm);
+                    } else {
+                        throw new Error(`不支持的算法: ${algorithm}`);
+                    }
+                    const encodedSignature = arrayBufferToBase64Url(signature);
+                    return signingInput + '.' + encodedSignature;
+                } catch (error) {
+                    throw error;
+                }
+            }
+            async function decodeJWT(token, secretKey) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        throw new Error('JWT Token 格式错误');
+                    }
+                    const header = JSON.parse(base64UrlDecode(parts[0]));
+                    const payload = JSON.parse(base64UrlDecode(parts[1]));
+                    const signature = parts[2];
+                    let isSignatureValid = false;
+                    let signatureMessage = '无密钥，无法验证签名';
+                    if (secretKey) {
+                        try {
+                            const expectedJWT = await generateJWT(header, payload, secretKey);
+                            const expectedSignature = expectedJWT.split('.')[2];
+                            isSignatureValid = signature === expectedSignature;
+                            signatureMessage = isSignatureValid ? '签名验证通过' : '签名验证失败，密钥可能不正确';
+                            updateKeyStatus(isSignatureValid, isSignatureValid ? '密钥正确' : '密钥错误');
+                        } catch (error) {
+                            signatureMessage = '签名验证出错：' + error.message;
+                            updateKeyStatus(false, '密钥验证失败');
+                        }
+                    } else {
+                        document.getElementById('keyStatus').classList.add('hidden');
+                    }
+                    updateSignatureStatus(isSignatureValid, signatureMessage);
+                    return { header, payload };
+                } catch (error) {
+                    throw error;
+                }
+            }
+            async function updateJWT() {
+                if (isUpdating) return;
+                const jwtInput = document.getElementById('jwtInput');
+                const secretKey = document.getElementById('secretKey').value.trim();
+                const headerEditor = document.getElementById('headerEditor');
+                const payloadEditor = document.getElementById('payloadEditor');
+                try {
+                    if (currentHeader && currentPayload && secretKey) {
+                        isUpdating = true;
+                        const newJWT = await generateJWT(currentHeader, currentPayload, secretKey);
+                        jwtInput.value = newJWT;
+                        isUpdating = false;
+                    }
+                } catch (error) {
+                    isUpdating = false;
+                    showError('生成 JWT 时发生错误：' + error.message);
+                }
+            }
+            document.getElementById('jwtInput').addEventListener('input', async function () {
+                if (isUpdating) return;
+                hideError();
+                const token = this.value.trim();
+                const secretKey = document.getElementById('secretKey').value.trim();
+                const headerEditor = document.getElementById('headerEditor');
+                const payloadEditor = document.getElementById('payloadEditor');
+                if (!token) {
+                    headerEditor.value = '';
+                    payloadEditor.value = '';
+                    payloadEditor.placeholder = '请输入 JWT Token 进行解析';
+                    updateSignatureStatus(false, '请输入 JWT Token');
+                    document.getElementById('keyStatus').classList.add('hidden');
+                    currentHeader = null;
+                    currentPayload = null;
+                    return;
+                }
+                try {
+                    const { header, payload } = await decodeJWT(token, secretKey);
+                    currentHeader = header;
+                    currentPayload = payload;
+                    headerEditor.value = JSON.stringify(header, null, 2);
+                    payloadEditor.value = JSON.stringify(payload, null, 2);
+                    payloadEditor.placeholder = '';
+                } catch (error) {
+                    showError('解析 JWT 时发生错误：' + error.message);
+                    headerEditor.value = '';
+                    payloadEditor.value = '';
+                    payloadEditor.placeholder = '请输入有效的 JWT Token';
+                    updateSignatureStatus(false, 'JWT 格式错误');
+                    currentHeader = null;
+                    currentPayload = null;
+                }
+            });
+            document.getElementById('secretKey').addEventListener('input', async function () {
+                const token = document.getElementById('jwtInput').value.trim();
+                const secretKey = this.value.trim();
+                if (token) {
+                    try {
+                        await decodeJWT(token, secretKey);
+                    } catch (error) {
+                        showError('验证签名时发生错误：' + error.message);
+                    }
+                }
+            });
+            document.getElementById('payloadEditor').addEventListener('input', async function () {
+                if (isUpdating) return;
+                hideError();
+                const payloadText = this.value.trim();
+                const secretKey = document.getElementById('secretKey').value.trim();
+                if (!payloadText || !currentHeader) return;
+                try {
+                    const newPayload = JSON.parse(payloadText);
+                    currentPayload = newPayload;
+                    await updateJWT();
+                } catch (error) {
+                    showError('Payload JSON 格式错误：' + error.message);
+                }
+            });
+        });
+    </script>
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?746b6d04475362bacfc05a1e9c2e0069";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+
+</body>
+
+</html>
